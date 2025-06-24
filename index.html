@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wordle Helper</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    label {
+      display: block;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 18px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      letter-spacing: 4px;
+    }
+    button {
+      display: block;
+      margin: 0 auto 30px auto;
+      padding: 12px 40px;
+      font-size: 18px;
+      background-color: #0078d7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #005ea3;
+    }
+    #results {
+      background: white;
+      padding: 15px 20px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      min-height: 50px;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      list-style: disc;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    ul li {
+      font-size: 16px;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h1>Wordle Helper</h1>
+
+  <label for="green">🟩 緑（正しい位置）: <small>例: _a__e</small></label>
+  <input type="text" id="green" maxlength="5" placeholder="_a__e" />
+
+  <label for="yellow">🟨 黄（位置違い）: <small>例: __r__</small></label>
+  <input type="text" id="yellow" maxlength="5" placeholder="__r__" />
+
+  <label for="gray">⬜ 灰（含まれない文字）: <small>例: tslpo</small></label>
+  <input type="text" id="gray" placeholder="tslpo" />
+
+  <button id="search-btn">検索</button>
+
+  <div id="results">Loading words...</div>
+
+  <script>
+    let wordList = [];
+
+    // 単語リストをJSONから読み込み
+    async function loadWords() {
+      try {
+        const res = await fetch("wordle_words.json");
+        wordList = await res.json();
+        document.getElementById("results").textContent = `単語を${wordList.length}件読み込みました。条件を入力して検索してください。`;
+      } catch (e) {
+        document.getElementById("results").textContent = "単語リストの読み込みに失敗しました。";
+        console.error(e);
+      }
+    }
+
+    // 絞り込み処理
+    function filterWords() {
+      const green = document.getElementById("green").value.toLowerCase();
+      const yellow = document.getElementById("yellow").value.toLowerCase();
+      const graySet = new Set(document.getElementById("gray").value.toLowerCase());
+
+      if (wordList.length === 0) {
+        alert("単語リストが読み込まれていません。ページをリロードしてください。");
+        return;
+      }
+
+      const results = wordList.filter(word => {
+        // 緑の位置が合っているか
+        for (let i = 0; i < 5; i++) {
+          if (green[i] && green[i] !== "_" && word[i] !== green[i]) {
+            return false;
+          }
+        }
+
+        // 黄色が単語に含まれていて、その位置にはないか
+        for (let i = 0; i < 5; i++) {
+          if (yellow[i] && yellow[i] !== "_") {
+            if (!word.includes(yellow[i]) || word[i] === yellow[i]) {
+              return false;
+            }
+          }
+        }
+
+        // 灰色は単語に含まれていないか。ただし緑・黄に含まれる文字は除外
+        for (const ch of graySet) {
+          if (green.includes(ch) || yellow.includes(ch)) continue;
+          if (word.includes(ch)) return false;
+        }
+
+        return true;
+      });
+
+      const resultDiv = document.getElementById("results");
+      if (results.length === 0) {
+        resultDiv.innerHTML = "<p>該当する単語がありませんでした。</p>";
+      } else {
+        resultDiv.innerHTML = `<h3>候補 (${results.length}件):</h3><ul>${results.map(w => `<li>${w}</li>`).join('')}</ul>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadWords();
+
+      document.getElementById("search-btn").addEventListener("click", filterWords);
+    });
+  </script>
+</body>
+</html>
