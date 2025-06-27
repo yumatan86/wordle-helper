@@ -1,63 +1,113 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>Wordle Helper - マス目版</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 500px;
-      margin: 40px auto;
-      padding: 20px;
-      background: #f9f9f9;
-    }
-    h1 {
-      text-align: center;
-    }
+<meta charset="UTF-8" />
+<title>Wordle Helper - ソフトキーボード専用入力</title>
+<style>
+  body {
+    font-family: sans-serif;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #f9f9f9;
+  }
+  h1 {
+    text-align: center;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 50px);
+    grid-gap: 8px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .cell {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 50px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    user-select: none;
+    cursor: pointer;
+    background: white;
+  }
+  .cell.active {
+    border-color: #0078d7;
+    box-shadow: 0 0 5px #0078d7;
+  }
+  .gray { background-color: #d3d6da; color: #000; }
+  .yellow { background-color: #c9b458; color: #fff; }
+  .green { background-color: #6aaa64; color: #fff; }
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .controls button {
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+  .keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-width: 400px;
+    margin: 10px auto;
+    align-items: center;
+  }
+  .keyboard-row {
+    display: flex;
+    gap: 5px;
+  }
+  .keyboard button {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    background: #eee;
+    transition: background 0.3s;
+    min-width: 30px;
+    cursor: pointer;
+  }
+  .keyboard button.used { background: #ddd; }
+  button.search {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #results {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+  }
+  @media (max-width: 600px) {
     .grid {
-      display: grid;
-      grid-template-columns: repeat(5, 50px);
-      grid-gap: 8px;
-      justify-content: center;
-      margin-bottom: 10px;
+      grid-template-columns: repeat(5, 40px);
+      grid-gap: 6px;
     }
     .cell {
-      width: 50px;
-      height: 50px;
-      font-size: 24px;
-      text-transform: uppercase;
-      text-align: center;
-      line-height: 50px;
-      border: 2px solid #ccc;
-      border-radius: 4px;
-      user-select: none;
-      outline: none;
-    }
-    .gray { background-color: #d3d6da; color: #000; }
-    .yellow { background-color: #c9b458; color: #fff; }
-    .green { background-color: #6aaa64; color: #fff; }
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+      line-height: 40px;
     }
     .controls button {
-      padding: 5px 10px;
+      padding: 4px 6px;
+      font-size: 12px;
+    }
+    .keyboard button {
+      padding: 8px;
       font-size: 14px;
     }
-    button.search {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-    #results {
-      background: white;
-      padding: 10px;
-      border-radius: 6px;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
   <h1>Wordle Helper</h1>
@@ -67,136 +117,218 @@
     <button onclick="setColor('yellow')">🟨 黄</button>
     <button onclick="setColor('green')">🟩 緑</button>
   </div>
+  <div class="keyboard" id="keyboard"></div>
   <button class="search" onclick="filterWords()">検索</button>
   <div id="results"></div>
 
-  <script>
-    const gridElement = document.getElementById("grid");
-    const rows = 6, cols = 5;
-    let wordList = [];
-    let activeCell = null;
+<script>
+  const gridElement = document.getElementById("grid");
+  const keyboard = document.getElementById("keyboard");
+  const rows = 6, cols = 5;
+  let wordList = [], letterFrequency = {};
+  let activeCell = null;
 
-    function createGrid() {
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const div = document.createElement("div");
-          div.contentEditable = true;
-          div.classList.add("cell");
-          div.dataset.state = "empty";
-          div.dataset.row = r;
-          div.dataset.col = c;
-          div.addEventListener("focus", () => activeCell = div);
-          div.addEventListener("input", handleInput);
-          div.addEventListener("keydown", handleKey);
-          gridElement.appendChild(div);
-        }
+  // グリッド作成（contentEditableは無し）
+  function createGrid() {
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const div = document.createElement("div");
+        div.classList.add("cell");
+        div.dataset.state = "empty";
+        div.dataset.row = r;
+        div.dataset.col = c;
+        div.textContent = "";
+        div.addEventListener("mousedown", e => {
+          e.preventDefault();  // フォーカス抑制とキーボード表示防止
+          setActiveCell(div);
+        });
+        gridElement.appendChild(div);
       }
     }
+  }
 
-    function setColor(color) {
-      if (!activeCell) return;
-      const states = ["gray", "yellow", "green"];
-      states.forEach(s => activeCell.classList.remove(s));
-      activeCell.dataset.state = color;
-      if (color !== "empty") activeCell.classList.add(color);
-    }
+  function setActiveCell(cell) {
+    if (activeCell) activeCell.classList.remove("active");
+    activeCell = cell;
+    activeCell.classList.add("active");
+  }
 
-    function handleInput(e) {
-      const cell = e.target;
-      let ch = cell.textContent.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 1);
-      cell.textContent = ch;
-      placeCursorToEnd(cell);
-      const next = getNextCell(cell);
-      if (next) next.focus();
-    }
+  // ソフトキーボード作成
+  function createKeyboard() {
+    const rows = [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ];
 
-    function handleKey(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const row = parseInt(e.target.dataset.row);
-        const col = parseInt(e.target.dataset.col);
-        if (col === 4 && row < rows - 1) {
-          const nextRowFirst = document.querySelector(`.cell[data-row='${row + 1}'][data-col='0']`);
-          if (nextRowFirst) nextRowFirst.focus();
-        }
-      } else if (e.key === "Backspace") {
-        const cell = e.target;
-        if (cell.textContent === "") {
-          const prev = getPrevCell(cell);
-          if (prev) {
-            prev.textContent = "";
-            prev.focus();
-          }
-        }
-      }
-    }
+    rows.forEach((row, rowIndex) => {
+      const rowDiv = document.createElement("div");
+      rowDiv.className = "keyboard-row";
 
-    function getNextCell(cell) {
-      const row = parseInt(cell.dataset.row);
-      const col = parseInt(cell.dataset.col);
-      if (col < cols - 1) return document.querySelector(`.cell[data-row='${row}'][data-col='${col + 1}']`);
-      return null;
-    }
-
-    function getPrevCell(cell) {
-      const row = parseInt(cell.dataset.row);
-      const col = parseInt(cell.dataset.col);
-      if (col > 0) return document.querySelector(`.cell[data-row='${row}'][data-col='${col - 1}']`);
-      return null;
-    }
-
-    function placeCursorToEnd(el) {
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-
-    async function loadWords() {
-      const res = await fetch("wordle_words.json");
-      wordList = await res.json();
-    }
-
-    function filterWords() {
-      const greens = Array(5).fill(null);
-      const yellows = Array(5).fill([]);
-      const grays = new Set();
-
-      const cells = gridElement.querySelectorAll(".cell");
-      for (let i = 0; i < cells.length; i++) {
-        const ch = cells[i].textContent.trim().toLowerCase();
-        const state = cells[i].dataset.state;
-        const col = i % 5;
-
-        if (!ch.match(/^[a-z]$/)) continue;
-
-        if (state === "green") greens[col] = ch;
-        else if (state === "yellow") yellows[col] = [...(yellows[col] || []), ch];
-        else if (state === "gray") grays.add(ch);
+      if (rowIndex === 2) {
+        const enterBtn = document.createElement("button");
+        enterBtn.textContent = "ENTER";
+        enterBtn.onclick = () => enterPressed();
+        rowDiv.appendChild(enterBtn);
       }
 
-      const result = wordList.filter(word => {
-        for (let i = 0; i < 5; i++) {
-          if (greens[i] && word[i] !== greens[i]) return false;
-          if (yellows[i] && yellows[i].some(y => word[i] === y || !word.includes(y))) return false;
-        }
-        for (const g of grays) {
-          if (greens.includes(g)) continue;
-          if (word.includes(g)) return false;
-        }
-        return true;
+      row.split("").forEach(letter => {
+        const btn = document.createElement("button");
+        btn.textContent = letter;
+        btn.id = `key-${letter}`;
+        btn.onclick = () => typeLetter(letter);
+        rowDiv.appendChild(btn);
       });
 
-      document.getElementById("results").innerHTML =
-        `<h3>候補 (${result.length}件):</h3><ul>` +
-        result.map(w => `<li>${w}</li>`).join("") +
-        "</ul>";
+      if (rowIndex === 2) {
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "DEL";
+        delBtn.onclick = () => deleteLetter();
+        rowDiv.appendChild(delBtn);
+      }
+
+      keyboard.appendChild(rowDiv);
+    });
+  }
+
+  function typeLetter(letter) {
+    if (!activeCell) return;
+    activeCell.textContent = letter;
+    markUsedLetter(letter);
+    moveNextCell();
+  }
+
+  function markUsedLetter(letter) {
+    const keyBtn = document.getElementById(`key-${letter.toUpperCase()}`);
+    if (keyBtn) keyBtn.classList.add("used");
+  }
+
+  function setColor(color) {
+    if (!activeCell) return;
+    const states = ["gray", "yellow", "green"];
+    states.forEach(s => activeCell.classList.remove(s));
+    activeCell.dataset.state = color;
+    if (color !== "empty") activeCell.classList.add(color);
+  }
+
+  function moveNextCell() {
+    if (!activeCell) return;
+    const row = parseInt(activeCell.dataset.row);
+    const col = parseInt(activeCell.dataset.col);
+    if (col < cols - 1) {
+      const next = document.querySelector(`.cell[data-row='${row}'][data-col='${col + 1}']`);
+      if (next) setActiveCell(next);
+    }
+  }
+
+  function movePrevCell() {
+    if (!activeCell) return;
+    const row = parseInt(activeCell.dataset.row);
+    const col = parseInt(activeCell.dataset.col);
+    if (col > 0) {
+      const prev = document.querySelector(`.cell[data-row='${row}'][data-col='${col - 1}']`);
+      if (prev) setActiveCell(prev);
+    }
+  }
+
+  function deleteLetter() {
+    if (!activeCell) return;
+    if (activeCell.textContent !== "") {
+      activeCell.textContent = "";
+    } else {
+      // 空なら前のマスへ
+      const row = parseInt(activeCell.dataset.row);
+      const col = parseInt(activeCell.dataset.col);
+      let prev = null;
+      if (col > 0) {
+        // 同じ行の左隣
+        prev = document.querySelector(`.cell[data-row='${row}'][data-col='${col - 1}']`);
+      } else if (row > 0) {
+        // 上の行の最後のマス
+        prev = document.querySelector(`.cell[data-row='${row - 1}'][data-col='${cols - 1}']`);
+      }
+      if (prev) {
+        setActiveCell(prev);
+        prev.textContent = "";
+      }
+    }
+  }
+
+  function enterPressed() {
+    if (!activeCell) return;
+    const row = parseInt(activeCell.dataset.row);
+    const col = parseInt(activeCell.dataset.col);
+    if (col === cols - 1 && row < rows - 1) {
+      const nextRowFirst = document.querySelector(`.cell[data-row='${row + 1}'][data-col='0']`);
+      if (nextRowFirst) setActiveCell(nextRowFirst);
+    }
+  }
+
+  async function loadWords() {
+    const res = await fetch("wordle_words.json");
+    wordList = await res.json();
+    calculateLetterFrequency();
+  }
+
+  function calculateLetterFrequency() {
+    letterFrequency = {};
+    wordList.forEach(word => {
+      const unique = new Set(word);
+      unique.forEach(ch => {
+        letterFrequency[ch] = (letterFrequency[ch] || 0) + 1;
+      });
+    });
+  }
+
+  function wordScore(word) {
+    const unique = new Set(word);
+    return [...unique].reduce((sum, ch) => sum + (letterFrequency[ch] || 0), 0);
+  }
+
+  function filterWords() {
+    const greens = Array(5).fill(null);
+    const yellows = Array(5).fill([]);
+    const grays = new Set();
+
+    const cells = gridElement.querySelectorAll(".cell");
+    for (let i = 0; i < cells.length; i++) {
+      const ch = cells[i].textContent.trim().toLowerCase();
+      const state = cells[i].dataset.state;
+      const col = i % 5;
+
+      if (!ch.match(/^[a-z]$/)) continue;
+
+      if (state === "green") greens[col] = ch;
+      else if (state === "yellow") yellows[col] = [...(yellows[col] || []), ch];
+      else if (state === "gray") grays.add(ch);
     }
 
-    createGrid();
-    loadWords();
-  </script>
+    let result = wordList.filter(word => {
+      for (let i = 0; i < 5; i++) {
+        if (greens[i] && word[i] !== greens[i]) return false;
+        if (yellows[i] && yellows[i].some(y => word[i] === y || !word.includes(y))) return false;
+      }
+      for (const g of grays) {
+        if (greens.includes(g)) continue;
+        if (word.includes(g)) return false;
+      }
+      return true;
+    });
+
+    result.sort((a, b) => wordScore(b) - wordScore(a));
+
+    const topHint = result.length > 0 ? result[0] : "なし";
+
+    document.getElementById("results").innerHTML =
+      `<h3>候補 (${result.length}件):</h3><ul>` +
+      result.map(w => `<li>${w}</li>`).join("") +
+      "</ul>" +
+      `<p><strong>🎯 ヒント:</strong> <span style='font-weight:bold;'>${topHint}</span></p>`;
+  }
+
+  createGrid();
+  createKeyboard();
+  loadWords();
+</script>
 </body>
 </html>
