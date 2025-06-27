@@ -64,19 +64,24 @@
     .keyboard-row {
       display: flex;
       gap: 5px;
-      flex-wrap: nowrap;
+      flex-wrap: wrap; /* 折り返しOK */
+      justify-content: center;
     }
     .keyboard button {
-      padding: 10px;
-      font-size: 18px;
+      padding: 10px 6px;
+      font-size: 16px;
       border-radius: 6px;
       border: none;
       background: #eee;
       transition: background 0.3s;
-      min-width: 36px;
       cursor: pointer;
+
+      flex-grow: 1;      /* 横幅均等 */
+      flex-basis: 0;     /* これがあると均等割りになる */
+      max-width: 50px;   /* 最大幅は50pxくらいで */
+      min-width: 30px;   /* 最低幅は30pxで */
+      text-align: center;
     }
-    .keyboard button.used { background: #ddd; }
     button.search {
       display: block;
       margin: 20px auto;
@@ -110,9 +115,10 @@
         font-size: 18px;
       }
       .keyboard button {
-        font-size: 20px;
-        padding: 14px;
-        min-width: 40px;
+        font-size: 18px;
+        padding: 14px 6px;
+        max-width: 44px;
+        min-width: 28px;
       }
     }
   </style>
