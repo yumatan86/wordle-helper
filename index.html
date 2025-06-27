@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<title>Wordle Helper - ソフトキーボード専用入力</title>
+<title>Wordle Helper - レスポンシブ対応</title>
 <style>
   body {
     font-family: sans-serif;
@@ -87,24 +87,31 @@
     padding: 10px;
     border-radius: 6px;
   }
+
   @media (max-width: 600px) {
+    body {
+      padding: 10px;
+      max-width: 100vw;
+    }
     .grid {
-      grid-template-columns: repeat(5, 40px);
-      grid-gap: 6px;
+      grid-template-columns: repeat(5, 70px);
+      grid-gap: 8px;
+      justify-content: center;
     }
     .cell {
-      width: 40px;
-      height: 40px;
-      font-size: 18px;
-      line-height: 40px;
+      width: 70px;
+      height: 70px;
+      font-size: 28px;
+      line-height: 70px;
     }
     .controls button {
-      padding: 4px 6px;
-      font-size: 12px;
+      padding: 8px 12px;
+      font-size: 16px;
     }
     .keyboard button {
-      padding: 8px;
-      font-size: 14px;
+      padding: 14px;
+      font-size: 18px;
+      min-width: 40px;
     }
   }
 </style>
@@ -128,7 +135,6 @@
   let wordList = [], letterFrequency = {};
   let activeCell = null;
 
-  // グリッド作成（contentEditableは無し）
   function createGrid() {
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -139,7 +145,7 @@
         div.dataset.col = c;
         div.textContent = "";
         div.addEventListener("mousedown", e => {
-          e.preventDefault();  // フォーカス抑制とキーボード表示防止
+          e.preventDefault();
           setActiveCell(div);
         });
         gridElement.appendChild(div);
@@ -153,7 +159,6 @@
     activeCell.classList.add("active");
   }
 
-  // ソフトキーボード作成
   function createKeyboard() {
     const rows = [
       "QWERTYUIOP",
@@ -221,30 +226,17 @@
     }
   }
 
-  function movePrevCell() {
-    if (!activeCell) return;
-    const row = parseInt(activeCell.dataset.row);
-    const col = parseInt(activeCell.dataset.col);
-    if (col > 0) {
-      const prev = document.querySelector(`.cell[data-row='${row}'][data-col='${col - 1}']`);
-      if (prev) setActiveCell(prev);
-    }
-  }
-
   function deleteLetter() {
     if (!activeCell) return;
     if (activeCell.textContent !== "") {
       activeCell.textContent = "";
     } else {
-      // 空なら前のマスへ
       const row = parseInt(activeCell.dataset.row);
       const col = parseInt(activeCell.dataset.col);
       let prev = null;
       if (col > 0) {
-        // 同じ行の左隣
         prev = document.querySelector(`.cell[data-row='${row}'][data-col='${col - 1}']`);
       } else if (row > 0) {
-        // 上の行の最後のマス
         prev = document.querySelector(`.cell[data-row='${row - 1}'][data-col='${cols - 1}']`);
       }
       if (prev) {
@@ -317,13 +309,10 @@
 
     result.sort((a, b) => wordScore(b) - wordScore(a));
 
-    const topHint = result.length > 0 ? result[0] : "なし";
-
     document.getElementById("results").innerHTML =
       `<h3>候補 (${result.length}件):</h3><ul>` +
       result.map(w => `<li>${w}</li>`).join("") +
-      "</ul>" +
-      `<p><strong>🎯 ヒント:</strong> <span style='font-weight:bold;'>${topHint}</span></p>`;
+      "</ul>";
   }
 
   createGrid();
