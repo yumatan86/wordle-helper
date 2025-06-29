@@ -64,7 +64,7 @@
     .keyboard-row {
       display: flex;
       gap: 5px;
-      flex-wrap: wrap; /* 折り返しOK */
+      flex-wrap: wrap;
       justify-content: center;
     }
     .keyboard button {
@@ -76,10 +76,10 @@
       transition: background 0.3s;
       cursor: pointer;
 
-      flex-grow: 1;      /* 横幅均等 */
-      flex-basis: 0;     /* これがあると均等割りになる */
-      max-width: 50px;   /* 最大幅は50pxくらいで */
-      min-width: 30px;   /* 最低幅は30pxで */
+      flex-grow: 1;
+      flex-basis: 0;
+      max-width: 50px;
+      min-width: 30px;
       text-align: center;
     }
     button.search {
@@ -95,28 +95,27 @@
       border-radius: 6px;
     }
 
-    /* スマホ対応 */
     @media (max-width: 600px) {
       body {
         padding: 8px;
         max-width: 100vw;
       }
       .grid {
-        grid-template-columns: repeat(5, 64px);
+        grid-template-columns: repeat(5, 50px);
         grid-gap: 6px;
       }
       .cell {
-        width: 64px;
-        height: 64px;
-        font-size: 30px;
-        line-height: 64px;
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+        line-height: 50px;
       }
       .controls button {
-        font-size: 18px;
+        font-size: 16px;
       }
       .keyboard button {
-        font-size: 18px;
-        padding: 14px 6px;
+        font-size: 16px;
+        padding: 10px 5px;
         max-width: 44px;
         min-width: 28px;
       }
@@ -167,23 +166,12 @@
     }
 
     function createKeyboard() {
-      const rows = [
-        "QWERTYUIOP",
-        "ASDFGHJKL",
-        "ZXCVBNM"
-      ];
-      rows.forEach((row, rowIndex) => {
+      const keys = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+      keys.forEach(rowStr => {
         const rowDiv = document.createElement("div");
         rowDiv.className = "keyboard-row";
 
-        if (rowIndex === 2) {
-          const enterBtn = document.createElement("button");
-          enterBtn.textContent = "ENTER";
-          enterBtn.onclick = () => enterPressed();
-          rowDiv.appendChild(enterBtn);
-        }
-
-        row.split("").forEach(letter => {
+        rowStr.split("").forEach(letter => {
           const btn = document.createElement("button");
           btn.textContent = letter;
           btn.id = `key-${letter}`;
@@ -191,27 +179,29 @@
           rowDiv.appendChild(btn);
         });
 
-        if (rowIndex === 2) {
-          const delBtn = document.createElement("button");
-          delBtn.textContent = "DEL";
-          delBtn.onclick = () => deleteLetter();
-          rowDiv.appendChild(delBtn);
-        }
-
         keyboard.appendChild(rowDiv);
       });
+
+      const specialRow = document.createElement("div");
+      specialRow.className = "keyboard-row";
+
+      const enterBtn = document.createElement("button");
+      enterBtn.textContent = "ENTER";
+      enterBtn.onclick = () => enterPressed();
+      specialRow.appendChild(enterBtn);
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "DEL";
+      delBtn.onclick = () => deleteLetter();
+      specialRow.appendChild(delBtn);
+
+      keyboard.appendChild(specialRow);
     }
 
     function typeLetter(letter) {
       if (!activeCell) return;
       activeCell.textContent = letter;
-      markUsedLetter(letter);
       moveNextCell();
-    }
-
-    function markUsedLetter(letter) {
-      const keyBtn = document.getElementById(`key-${letter.toUpperCase()}`);
-      if (keyBtn) keyBtn.classList.add("used");
     }
 
     function setColor(color) {
