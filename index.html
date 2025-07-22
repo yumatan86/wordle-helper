@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wordle Helper</title>
   <style>
     body {
@@ -52,6 +52,7 @@
     .controls button {
       padding: 8px 12px;
       font-size: 16px;
+      cursor: pointer;
     }
     .keyboard {
       display: flex;
@@ -94,6 +95,18 @@
       padding: 10px;
       border-radius: 6px;
     }
+    p.link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    p.link a {
+      color: #0078d7;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    p.link a:hover {
+      text-decoration: underline;
+    }
 
     @media (max-width: 600px) {
       body {
@@ -124,15 +137,22 @@
 </head>
 <body>
   <h1>Wordle Helper</h1>
+
   <div id="grid" class="grid"></div>
+
   <div class="controls">
     <button onclick="setColor('gray')">⬜ 灰</button>
     <button onclick="setColor('yellow')">🟨 黄</button>
     <button onclick="setColor('green')">🟩 緑</button>
   </div>
+
   <div class="keyboard" id="keyboard"></div>
+
   <button class="search" onclick="filterWords()">検索</button>
+
   <div id="results"></div>
+
+  <p class="link"><a href="search.html">🔎 文字を含む単語検索はこちら</a></p>
 
   <script>
     const gridElement = document.getElementById("grid");

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>文字で単語検索</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+    }
+    input {
+      font-size: 18px;
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      display: block;
+      margin: 0 auto 20px;
+      border: none;
+      background: #0078d7;
+      color: white;
+      border-radius: 6px;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #005ea1;
+    }
+    #results {
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      min-height: 40px;
+    }
+    p.link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    p.link a {
+      color: #0078d7;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    p.link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>文字で単語検索</h1>
+
+  <input type="text" id="includeLetters" placeholder="例: at（複数可）" />
+  <button onclick="searchWords()">検索</button>
+
+  <div id="results"></div>
+
+  <p class="link"><a href="index.html">← ワードル補助に戻る</a></p>
+
+  <script>
+    let wordList = [];
+
+    async function loadWords() {
+      const res = await fetch("wordle_words.json");
+      wordList = await res.json();
+    }
+
+    function searchWords() {
+      const includeLetters = document.getElementById("includeLetters").value
+        .toLowerCase()
+        .replace(/[^a-z]/g, "")
+        .split("");
+
+      const result = wordList.filter(word =>
+        includeLetters.every(ch => word.includes(ch))
+      );
+
+      document.getElementById("results").innerHTML =
+        `<h3>候補 (${result.length}件):</h3><ul>` +
+        result.map(w => `<li>${w}</li>`).join("") +
+        "</ul>";
+    }
+
+    loadWords();
+  </script>
+</body>
+</html>
