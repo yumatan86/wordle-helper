@@ -97,12 +97,16 @@
     }
     p.link {
       text-align: center;
-      margin-top: 20px;
+      margin: 10px 0 20px;
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 18px;
     }
     p.link a {
       color: #0078d7;
       text-decoration: none;
-      font-weight: bold;
     }
     p.link a:hover {
       text-decoration: underline;
@@ -138,6 +142,12 @@
 <body>
   <h1>Wordle Helper</h1>
 
+  <p class="link">
+    <a href="search.html" target="_blank" rel="noopener noreferrer">
+      🔎 文字を含む単語検索はこちら（新しいタブで開く）
+    </a>
+  </p>
+
   <div id="grid" class="grid"></div>
 
   <div class="controls">
@@ -151,8 +161,6 @@
   <button class="search" onclick="filterWords()">検索</button>
 
   <div id="results"></div>
-
-  <p class="link"><a href="search.html">🔎 文字を含む単語検索はこちら</a></p>
 
   <script>
     const gridElement = document.getElementById("grid");
